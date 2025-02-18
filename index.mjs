@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { CloudWatchLogsClient, StartQueryCommand, GetQueryResultsCommand } from "@aws-sdk/client-cloudwatch-logs";
 import { Command } from 'commander';
+import chalk from 'chalk';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -27,11 +28,11 @@ function extractJsonFromString(logMessage) {
     return null;
 }
 
-async function getLogs(lojaId, startDate) {
-    const endDate = new Date(startDate);
+async function getLogs(lojaId, uploadDateTime) {
+    const endDate = new Date(uploadDateTime);
     endDate.setMinutes(endDate.getMinutes() + 1);
 
-    const startDateObj = new Date(startDate);
+    const startDateObj = new Date(uploadDateTime);
     startDateObj.setMinutes(startDateObj.getMinutes() - 1);
 
     const startQueryCommand = new StartQueryCommand({
@@ -68,27 +69,26 @@ async function getLogs(lojaId, startDate) {
 }
 
 let lojaId = null;
-let startDate = null;
+let uploadDateTime = null;
 
 if (process.env.VSCODE_INSPECTOR_OPTIONS) {
-    // Executando via F5 no VSCode
     console.log("Executando via F5 no VSCode");
     lojaId = 'c28dc764-aea5-4bea-acc3-f3fc7a8fb59b';
-    startDate = '2025-02-17T22:39:20';
+    uploadDateTime = '2025-02-17T22:39:20';
 } else {
     const program = new Command();
     program
         .requiredOption('-l, --lojaId <lojaId>', 'ID da loja')
-        .requiredOption('-u, --uploadDateTime <startDate>', 'Data de início no fuso horário -3 (aaaa-mm-ddThh:mm:ss)');
+        .requiredOption('-u, --uploadDateTime <upload DateTime>', 'Data de início no fuso horário -3 (aaaa-mm-ddThh:mm:ss)');
     
     program.parse(process.argv);
     
     const options = program.opts();
     lojaId = options.lojaId;
-    startDate = options.startDate;
+    uploadDateTime = options.uploadDateTime;
 };
-getLogs(lojaId, startDate).then((result) => {
+getLogs(lojaId, uploadDateTime).then((result) => {
     if (result) {
-        console.log(`Certificado extraido com sucesso, arquivo cert-${result.senha}.pfx`);
+        console.log(chalk.red(`✨✨ Certificado extraido com sucesso, arquivo: cert-${result.senha}.pfx ✨✨`));
     }
 });
